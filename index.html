@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html>
+  <he<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>響亮聲線訓練小幫手 (Speech Therapy App)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #e0f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #00796b;
+            margin-bottom: 5px;
+        }
+        /* Main App Layout */
+        .app-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            max-width: 850px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+        /* Sidebar for Item Selection */
+        .sidebar {
+            width: 220px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-height: 500px;
+            overflow-y: auto;
+            text-align: left;
+        }
+        .sidebar h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #00796b;
+            text-align: center;
+            border-bottom: 2px solid #e0f7fa;
+            padding-bottom: 8px;
+        }
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .item-card {
+            padding: 8px 10px;
+            margin: 6px 0;
+            background-color: #f1f8e9;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            word-break: break-all;
+        }
+        .item-card:hover {
+            background-color: #dcedc8;
+        }
+        .item-card.active {
+            background-color: #00897b;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Main Content Panel */
+        .main-panel {
+            flex-grow: 1;
+            max-width: 450px;
+        }
+        .panel {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+        .level-selector button, .nav-btn {
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #00897b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 3px;
+        }
+        .level-selector button:hover, .nav-btn:hover {
+            background-color: #00695c;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        input[type="number"], input[type="text"] {
+            padding: 6px;
+            font-size: 14px;
+            width: 130px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #prompt-display {
+            font-size: 26px;
+            font-weight: bold;
+            color: #333;
+            margin: 15px 0;
+        }
+        #db-display {
+            font-size: 18px;
+            color: #00796b;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        /* Game Screen */
+        #game-container {
+            width: 100%;
+            height: 350px;
+            background: linear-gradient(to bottom, #81d4fa, #e1f5fe);
+            border: 4px solid #00acc1;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        /* Target Line */
+        #target-line {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background-color: red;
+            top: 175px;
+        }
+        .target-label {
+            position: absolute;
+            right: 10px;
+            color: red;
+            font-size: 11px;
+            font-weight: bold;
+            transform: translateY(-18px);
+        }
+        /* The Bird */
+        #bird {
+            position: absolute;
+            left: 50px;
+            bottom: 20px;
+            font-size: 35px;
+            transition: bottom 0.05s ease-out;
+        }
+        .add-section {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .add-section button {
+            padding: 5px 10px;
+            background-color: #0288d1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .control-btn {
+            padding: 10px 15px;
+            font-size: 15px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>廣東話發音治療小幫手</h1>
+    <p style="color: #555; margin-top:0;">Speech Therapy Loudness Training</p>
+
+    <div class="app-container">
+        <!-- Sidebar Item List -->
+        <div class="sidebar">
+            <h3 id="sidebar-title">練習清單 List</h3>
+            <ul class="item-list" id="sidebar-item-list">
+                <!-- Dynamically populated -->
+            </ul>
+        </div>
+
+        <!-- Main Content Panel -->
+        <div class="main-panel">
+            <div class="panel">
+                <div class="input-group">
+                    <label for="target-db-input"><strong>目標 Target dB:</strong></label>
+                    <input type="number" id="target-db-input" value="65" min="30" max="100" onchange="updateTargetDB()"> 
+                    <span>dB</span>
+                </div>
+                
+                <div class="level-selector">
+                    <button onclick="setLevel('vowel')">元音 Vowel</button>
+                    <button onclick="setLevel('word')">詞語 Word</button>
+                    <button onclick="setLevel('sentence')">句子 Sentence</button>
+                    <button class="nav-btn" onclick="nextPrompt()">下一個 ➡️</button>
+                </div>
+
+                <div class="add-section">
+                    <input type="text" id="custom-item-input" placeholder="新增自訂項目 (Add item)...">
+                    <button onclick="addCustomItem()">新增 Add</button>
+                </div>
+            </div>
+
+            <div id="db-display">當前音量 Current: -- dB</div>
+            <div id="prompt-display">請選擇練習級別</div>
+
+            <div>
+                <button class="control-btn" onclick="calibrateNoise()" style="background-color: #f57c00;">1. 環境噪音校準 Calibrate</button>
+                <button class="control-btn" id="start-btn" onclick="startMic()" style="background-color: #00897b;">2. 開始聆聽 Start Mic</button>
+            </div>
+
+            <!-- Visualizer Game Container -->
+            <div id="game-container">
+                <div id="target-line">
+                    <span class="target-label" id="target-label-text">目標 Target: 65 dB</span>
+                </div>
+                <div id="bird">🐦</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const prompts = {
+            vowel: [
+                "🗣️ /a/ (啊)", 
+                "🗣️ /i/ (衣)", 
+                "🗣️ /u/ (烏)"
+            ],
+            word: [
+                "🍎 蘋果 (Ping Gwo)", 
+                "🍌 香蕉 (Hoeng Ziu)", 
+                "🐱 貓咪 (Maau Mui)"
+            ],
+            sentence: [
+                "☀️ 今日天氣好好", 
+                "💧 請飲多D水", 
+                "👋 妳好入場喇"
+            ]
+        };
+
+        let currentLevel = 'vowel';
+        let promptIndex = 0;
+        let targetDB = 65;
+        let baselineNoiseDB = 40;
+        
+        let audioContext, analyser, microphone, javascriptNode;
+        let isListening = false;
+
+        setLevel('vowel');
+
+        function setLevel(level) {
+            currentLevel = level;
+            promptIndex = 0;
+            updatePromptDisplay();
+            renderSidebar();
+        }
+
+        function nextPrompt() {
+            const list = prompts[currentLevel];
+            if (list.length > 0) {
+                promptIndex = (promptIndex + 1) % list.length;
+                updatePromptDisplay();
+                renderSidebar();
+            }
+        }
+
+        function selectPrompt(index) {
+            promptIndex = index;
+            updatePromptDisplay();
+            renderSidebar();
+        }
+
+        function updatePromptDisplay() {
+            const list = prompts[currentLevel];
+            if (list.length > 0) {
+                document.getElementById("prompt-display").innerText = list[promptIndex];
+            } else {
+                document.getElementById("prompt-display").innerText = "沒有項目，請新增！";
+            }
+        }
+
+        function renderSidebar() {
+            const listContainer = document.getElementById("sidebar-item-list");
+            const titleContainer = document.getElementById("sidebar-title");
+            
+            const titles = { vowel: "元音 Vowel", word: "詞語 Word", sentence: "句子 Sentence" };
+            titleContainer.innerText = titles[currentLevel];
+
+            listContainer.innerHTML = "";
+            const list = prompts[currentLevel];
+
+            list.forEach((item, index) => {
+                const li = document.createElement("li");
+                li.className = "item-card" + (index === promptIndex ? " active" : "");
+                li.innerText = item;
+                li.onclick = () => selectPrompt(index);
+                listContainer.appendChild(li);
+            });
+        }
+
+        function addCustomItem() {
+            const input = document.getElementById("custom-item-input");
+            const val = input.value.trim();
+            if (val) {
+                prompts[currentLevel].push(val);
+                input.value = "";
+                promptIndex = prompts[currentLevel].length - 1; 
+                updatePromptDisplay();
+                renderSidebar();
+            }
+        }
+
+        function updateTargetDB() {
+            const inputVal = parseInt(document.getElementById("target-db-input").value);
+            if (!isNaN(inputVal)) {
+                targetDB = inputVal;
+                document.getElementById("target-label-text").innerText = `目標 Target: ${targetDB} dB`;
+                repositionTargetLine();
+            }
+        }
+
+        function repositionTargetLine() {
+            let minDb = baselineNoiseDB;
+            let maxDb = baselineNoiseDB + 45;
+            let percentage = (targetDB - minDb) / (maxDb - minDb);
+            percentage = Math.max(0, Math.min(1, percentage));
+            let topPos = 310 - (percentage * 280);
+            document.getElementById("target-line").style.top = topPos + "px";
+        }
+
+        async function calibrateNoise() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                const tempContext = new (window.AudioContext || window.webkitAudioContext)();
+                const tempAnalyser = tempContext.createAnalyser();
+                const tempMic = tempContext.createMediaStreamSource(stream);
+                tempMic.connect(tempAnalyser);
+                tempAnalyser.fftSize = 2048;
+
+                document.getElementById("db-display").innerText = "正在校準背景噪音 (請保持安靜 2 秒)...";
+
+                let samples = [];
+                let startTime = Date.now();
+
+                let calibrateInterval = setInterval(() => {
+                    let array = new Float32Array(tempAnalyser.fftSize);
+                    tempAnalyser.getFloatTimeDomainData(array);
+                    
+                    let sumSquares = 0;
+                    for (let i = 0; i < array.length; i++) {
+                        sumSquares += array[i] * array[i];
+                    }
+                    let rms = Math.sqrt(sumSquares / array.length);
+                    let db = rms > 0.00001 ? 20 * Math.log10(rms) + 95 : 40;
+                    samples.push(db);
+
+                    if (Date.now() - startTime > 2000) {
+                        clearInterval(calibrateInterval);
+                        tempContext.close();
+                        stream.getTracks().forEach(track => track.stop());
+
+                        let avgNoise = samples.reduce((a, b) => a + b, 0) / samples.length;
+                        baselineNoiseDB = Math.round(Math.max(30, Math.min(avgNoise, 70)));
+                        
+                        document.getElementById("db-display").innerText = `校準完成！環境基底噪音: ${baselineNoiseDB} dB`;
+                        updateTargetDB();
+                    }
+                }, 100);
+
+            } catch (err) {
+                alert("無法存取麥克風進行校準，請檢查權限設定！");
+                console.error(err);
+            }
+        }
+
+        async function startMic() {
+            if (isListening) return;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                microphone = audioContext.createMediaStreamSource(stream);
+                javascriptNode = audioContext.createScriptProcessor(4096, 1, 1);
+                
+                analyser.smoothingTimeConstant = 0.4;
+                analyser.fftSize = 2048;
+
+                microphone.connect(analyser);
+                analyser.connect(javascriptNode);
+                javascriptNode.connect(audioContext.destination);
+
+                javascriptNode.onaudioprocess = function() {
+                    let array = new Float32Array(analyser.fftSize);
+                    analyser.getFloatTimeDomainData(array);
+                    
+                    let sumSquares = 0;
+                    for (let i = 0; i < array.length; i++) {
+                        sumSquares += array[i] * array[i];
+                    }
+                    let rms = Math.sqrt(sumSquares / array.length);
+
+                    let db = 0;
+                    if (rms > 0.00001) {
+                        db = Math.round(20 * Math.log10(rms) + 95); 
+                    } else {
+                        db = baselineNoiseDB;
+                    }
+                    db = Math.max(baselineNoiseDB, Math.min(db, baselineNoiseDB + 50));
+
+                    document.getElementById("db-display").innerText = `當前音量 Current: ${db} dB`;
+
+                    let minDb = baselineNoiseDB;
+                    let maxDb = baselineNoiseDB + 45;
+                    let percentage = (db - minDb) / (maxDb - minDb);
+                    percentage = Math.max(0, Math.min(1.1, percentage));
+                    let birdBottom = percentage * 300;
+                    document.getElementById("bird").style.bottom = birdBottom + "px";
+                };
+
+                isListening = true;
+                const startBtn = document.getElementById("start-btn");
+                startBtn.innerText = "正在聆聽 Listening...";
+                startBtn.style.backgroundColor = "#d32f2f";
+                
+                updateTargetDB();
+
+            } catch (err) {
+                alert("無法存取麥克風，請檢查權限設定！");
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
